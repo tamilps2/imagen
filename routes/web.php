@@ -11,12 +11,10 @@
 |
 */
 
+use Intervention\Image\Facades\Image;
+
 Route::get('/', function () {
     return redirect(route('home'));
-});
-
-Route::get('/test', function () {
-    phpinfo();
 });
 
 Auth::routes();
@@ -43,6 +41,7 @@ Route::group(['prefix' => 'presets',  'middleware' => 'auth'], function() {
     Route::get('/', 'PresetController@index')->name('presets');
 
     Route::get('create', 'PresetController@create')->name('create_preset');
+    Route::get('preview', 'PresetController@previewWatermark')->name('preview_watermark');
     Route::post('add', 'PresetController@store')->name('add_preset');
 
     Route::get('edit/{preset}', 'PresetController@edit')->name('edit_preset');

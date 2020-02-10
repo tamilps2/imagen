@@ -179,8 +179,9 @@ class ImageGenerator extends BaseGenerator implements GeneratorInterface
         $company = $this->getCompanyForSection($preset);
 
         $watermark = Image::make($company->getCompanyLogo())
-            ->resize($watermarkWidth, $watermarkHeight)
-            ->opacity($watermarkOpacity);
+            ->resize($watermarkWidth, null, function ($constraint) {
+                $constraint->aspectRatio();
+            })->opacity($watermarkOpacity);
 
         if ($preset->{$this->section . '_wm_unit'} === 'auto') {
             $image->insert(

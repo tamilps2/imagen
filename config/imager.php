@@ -49,5 +49,5 @@ return [
      *
      * This will take additional milliseconds of processing.
      */
-    'track_section_progress' => false
+    'track_section_progress' => true
 ];

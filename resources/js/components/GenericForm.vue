@@ -73,7 +73,7 @@
         <label>Company Logo</label>
         <v-select
           v-model="form.company"
-          @input="(val) => $emit('company-id', val)"
+          @input="companyHandler"
           :options="pick_list.companies"
           :disabled="disabled"
           :get-option-label="company => company.name"
@@ -89,7 +89,7 @@
           <label>Position</label>
           <v-select
             v-model="form.position"
-            @input="(val) => $emit('position', val)"
+            @input="positionHandler"
             :options="pick_list.positions"
             :disabled="disabled"
             placeholder="Select a position"
@@ -101,7 +101,7 @@
           <label>unit</label>
           <v-select
             v-model="form.unit"
-            @input="(val) => $emit('unit', val)"
+            @input="unitHanlder"
             :options="pick_list.units"
             :disabled="disabled"
             placeholder="Select a unit"
@@ -109,14 +109,15 @@
           <span v-if="errors[id + '_wm_unit']" class="text-danger">{{ errors[id + '_wm_unit'].join(', ') }}</span>
         </div>
       </div>
-      <watermark-preview v-show="form.position" :position="form.position"/>
+      <div ref="watermarkPreview" class="my-4 text-center"></div>
+<!--      <watermark-preview v-show="form.position" :position="form.position"/>-->
       <br/>
       <div class="form-row">
         <div class="col">
           <label>X Axis</label>
           <input
             v-model="form.xAxis"
-            @change="$emit('posx', $event.target.value)"
+            @change="xAxisHandler"
             :disabled="disabled || form.unit === 'auto'"
             name="posx"
             type="text"
@@ -129,7 +130,7 @@
           <label>Y Axis</label>
           <input
             v-model="form.yAxis"
-            @change="$emit('posy', $event.target.value)"
+            @change="yAxisHandler"
             :disabled="disabled || form.unit === 'auto'"
             name="posy"
             type="text"
@@ -145,6 +146,9 @@
 
 <script>
   import WatermarkPreview from "./WatermarkPreview";
+  import jQuery from 'jquery';
+
+  const $ = jQuery;
 
   export default {
     name: 'GenericForm',
@@ -263,13 +267,66 @@
           unit: '',
           xAxis: '',
           yAxis: ''
-        }
+        },
+        loading: false,
       }
     },
 
     methods: {
-      showPlaceholderImage() {
+      companyHandler(val) {
+        this.$emit('company', val);
+        this.generatePreviewImage();
+      },
+      positionHandler(val) {
+        this.$emit('position', val);
+        this.generatePreviewImage();
+      },
+      unitHanlder(val) {
+        this.$emit('unit', val);
+        this.generatePreviewImage();
+      },
+      xAxisHandler(event) {
+        this.$emit('posx', event.target.value);
+        this.generatePreviewImage();
+      },
+      yAxisHandler(event) {
+        this.$emit('posy', event.target.value);
+        this.generatePreviewImage();
+      },
+      generatePreviewImage() {
+        if (
+          this.form.width == '' &&
+          this.form.height == '' &&
+          this.form.company == '' &&
+          this.form.position == '' &&
+          this.form.unit == ''
+        ) {
+          $(this.$refs.watermarkPreview).html('');
+          return;
+        }
 
+        if (
+          (this.form.unit === 'px' || this.form.unit === 'percent') &&
+          (this.form.xAxis === null || this.form.yAxis === null)
+        ) {
+          $(this.$refs.watermarkPreview).html('<small>Provide axis</small>');
+          return;
+        }
+
+        axios.get('/presets/preview', {
+          params: {
+            ...this.form
+          },
+          responseType: 'arraybuffer'
+        }).then((res) => {
+          let imageString = new Buffer(res.data, 'binary').toString('base64');
+          let img = document.createElement("img");
+          img.style = 'max-width: 100%;height: auto;';
+          img.src = 'data:image/png;base64, ' + imageString;
+          $(this.$refs.watermarkPreview).html(img);
+        }).catch((error) => {
+          console.log(error);
+        });
       }
     }
   }
